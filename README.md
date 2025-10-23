@@ -117,7 +117,7 @@ APP_PASSWORD=votre-mot-de-passe-admin
 
 5. **Créer l'image de bannière** (optionnel)
 
-Placez une image `patchmap-banner.png` dans le dossier `static/` pour personnaliser l'interface.
+Placez une image `image.png` dans le dossier `static/` pour personnaliser l'interface.
 
 6. **Lancer l'application**
 ```bash
@@ -142,7 +142,7 @@ patchmap/
 ├── static/                        # Fichiers statiques (auto-générés)
 │   ├── panneau_bandeaux.json     # Données des panneaux (créé automatiquement)
 │   ├── disposition.json          # Positions des zones (créé automatiquement)
-│   └── patchmap-banner.png       # Image de bannière (optionnel)
+│   └── image.png                   # Image de bannière (doit etre ajoute)
 │
 └── templates/                     # Templates HTML
     ├── index.html                # Dashboard principal
@@ -234,24 +234,9 @@ Flask==3.0.0
 python-dotenv==1.0.0
 ```
 
-3. **Déploiement**
 
-```bash
-# Installer Vercel CLI
-npm i -g vercel
 
-# Se connecter
-vercel login
-
-# Déployer
-vercel
-
-# Configurer les secrets
-vercel secrets add secret_key "votre-cle-secrete"
-vercel secrets add app_password "votre-mot-de-passe"
-```
-
-4. **Configuration des Variables d'Environnement**
+3. **Configuration des Variables d'Environnement**
 
 Dans le dashboard Vercel :
 - Ajoutez `SECRET_KEY`
@@ -270,32 +255,7 @@ https://votre-projet.vercel.app
 > - Le mot de passe d'accès
 > - La procédure pour demander des modifications
 
----
 
-## 🔒 Sécurité
-
-### Bonnes Pratiques
-
-- ✅ Changez toujours le mot de passe par défaut
-- ✅ Utilisez une `SECRET_KEY` forte et unique
-- ✅ Ne committez jamais le fichier `.env`
-- ✅ Limitez l'accès aux personnes autorisées
-- ✅ Effectuez des sauvegardes régulières des fichiers JSON
-
-### Fichiers Sensibles
-
-Le `.gitignore` inclut :
-```gitignore
-.env
-*.pyc
-__pycache__/
-instance/
-.venv/
-venv/
-*.log
-```
-
----
 
 ## 📊 Structure des Données
 
@@ -485,7 +445,7 @@ Pour toute question ou problème :
 
 - 🐛 [Ouvrir une issue](https://github.com/focus-on1/patchmap/issues)
 - 💬 [Discussions](https://github.com/focus-on1/patchmap/discussions)
-- 📧 Email : [votre-email@example.com]
+
 
 ---
 
