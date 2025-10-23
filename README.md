@@ -85,7 +85,7 @@ Développé pour répondre aux besoins réels d'une entreprise lyonnaise, PatchM
 
 1. **Cloner le repository**
 ```bash
-git clone https://github.com/focus-on1/patchmap.git
+git clone https://github.com/focus-on1/PatchMap.git
 cd patchmap
 ```
 
