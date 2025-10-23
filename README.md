@@ -20,7 +20,9 @@
 
 ## 📖 À propos du projet
 
-**PatchMap** est une application web moderne de gestion des panneaux de brassage (patch panels) développée dans le cadre d'une mission professionnelle à Lyon. Ce projet m'a permis d'acquérir des compétences solides en développement full-stack, en gestion d'infrastructure IT et en conception d'interfaces utilisateur intuitives.
+PatchMap est une application web moderne de gestion des panneaux de brassage (patch panels), développée dans le cadre d’une mission professionnelle à Lyon.
+Au lieu de remplir un fichier Excel, j’ai mis en place un MVP me permettant d’être plus efficace.
+Cette expérience m’a donné l’idée de publier ce logiciel en open source afin d’en faire profiter d’autres PME souhaitant cartographier l’ensemble de leurs prises et avoir une vue en temps réel de leurs baies.
 
 ### 🎯 Contexte
 
