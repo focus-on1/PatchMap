@@ -10,7 +10,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![Flask](https://img.shields.io/badge/Flask-3.0+-green.svg)](https://flask.palletsprojects.com/)
-[![Version](https://img.shields.io/badge/Version-1.0.0-orange.svg)](https://github.com/focus-on1/patchmap)
+[![Version](https://img.shields.io/badge/Version-1.0.0-orange.svg)](https://github.com/focus-on1/PatchMap)
 
 [Installation](#-installation) • [Fonctionnalités](#-fonctionnalités) • [Utilisation](#-utilisation) • [Déploiement](#-déploiement-sur-vercel) • [Documentation](#-documentation)
 
@@ -86,7 +86,7 @@ Développé pour répondre aux besoins réels d'une entreprise lyonnaise, PatchM
 1. **Cloner le repository**
 ```bash
 git clone https://github.com/focus-on1/PatchMap.git
-cd patchmap
+cd PatchMap
 ```
 
 2. **Créer un environnement virtuel** (recommandé)
@@ -131,7 +131,7 @@ L'application sera accessible sur : **http://localhost:5000**
 ## 📁 Structure du Projet
 
 ```
-patchmap/
+PatchMap/
 │
 ├── app.py                          # Application Flask principale
 ├── requirements.txt                # Dépendances Python
@@ -443,8 +443,8 @@ Développé avec ❤️ à Lyon dans le cadre d'une mission professionnelle en e
 
 Pour toute question ou problème :
 
-- 🐛 [Ouvrir une issue](https://github.com/focus-on1/patchmap/issues)
-- 💬 [Discussions](https://github.com/focus-on1/patchmap/discussions)
+- 🐛 [Ouvrir une issue](https://github.com/focus-on1/PatchMap/issues)
+- 💬 [Discussions](https://github.com/focus-on1/PatchMap/discussions)
 
 
 ---
