@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vue Baie - Panneaux de Brassage</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: white;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            color: #ecf0f1;
+        }
+
+        .header .breadcrumb {
+            color: #bdc3c7;
+            font-size: 1.1em;
+        }
+
+        .zone-info-banner {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3);
+            display: none;
+        }
+
+        .zone-info-banner.active {
+            display: block;
+            animation: slideDown 0.5s ease;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .zone-info-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .zone-details {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .zone-stat {
+            text-align: center;
+        }
+
+        .zone-stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .zone-stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .btn.secondary {
+            background: #95a5a6;
+        }
+
+        .btn.secondary:hover {
+            background: #7f8c8d;
+        }
+
+        .btn.zone-focus {
+            background: #f39c12;
+        }
+
+        .btn.zone-focus:hover {
+            background: #e67e22;
+        }
+
+        .filter-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .filter-controls select {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            background: white;
+            color: #2c3e50;
+        }
+
+        .baie-container {
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .panneau {
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            margin-bottom: 25px;
+            overflow: hidden;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .panneau.zone-panneau {
+            border-color: #f39c12;
+            box-shadow: 0 0 30px rgba(243, 156, 18, 0.5);
+            background: rgba(243, 156, 18, 0.1);
+        }
+
+        .panneau.zone-panneau::before {
+            content: '🎯 Zone Active';
+            position: absolute;
+            top: -10px;
+            right: 20px;
+            background: #f39c12;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: bold;
+            z-index: 10;
+        }
+
+        .panneau.dimmed {
+            opacity: 0.3;
+            transform: scale(0.98);
+        }
+
+        .panneau-header {
+            background: rgba(52, 73, 94, 0.8);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panneau.zone-panneau .panneau-header {
+            background: rgba(243, 156, 18, 0.8);
+        }
+
+        .panneau-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #ecf0f1;
+        }
+
+        .panneau-stats {
+            display: flex;
+            gap: 20px;
+            font-size: 0.9em;
+        }
+
+        .stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 60px;
+        }
+
+        .stat-value {
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-bottom: 2px;
+        }
+
+        .stat-label {
+            font-size: 0.8em;
+            opacity: 0.8;
+        }
+
+        .stat.utilisees .stat-value { color: #e74c3c; }
+        .stat.libres .stat-value { color: #27ae60; }
+        .stat.taux .stat-value { color: #f39c12; }
+
+        .positions-grid {
+            display: grid;
+            grid-template-columns: repeat(16, 1fr);
+            gap: 4px;
+            padding: 20px;
+            background: rgba(0,0,0,0.2);
+        }
+
+        .position {
+            aspect-ratio: 1;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            position: relative;
+        }
+
+        .position:hover {
+            transform: scale(1.1);
+        }
+
+        .position.utilisee {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .position.libre {
+            background: #27ae60;
+            color: white;
+        }
+
+        .position.special {
+            background: #f39c12;
+            color: white;
+            font-weight: bold;
+        }
+
+        /* Positions de la zone sélectionnée */
+        .position.zone-position {
+            border: 3px solid #ecf0f1 !important;
+            box-shadow: 
+                0 0 20px rgba(236, 240, 241, 0.8),
+                inset 0 0 20px rgba(236, 240, 241, 0.3) !important;
+            animation: zonePulse 2s infinite;
+            z-index: 5;
+            transform: scale(1.1);
+        }
+
+        @keyframes zonePulse {
+            0%, 100% { 
+                box-shadow: 
+                    0 0 20px rgba(236, 240, 241, 0.8),
+                    inset 0 0 20px rgba(236, 240, 241, 0.3);
+            }
+            50% { 
+                box-shadow: 
+                    0 0 35px rgba(236, 240, 241, 1),
+                    inset 0 0 30px rgba(236, 240, 241, 0.5);
+            }
+        }
+
+        .position.zone-position::before {
+            content: '⭐';
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            font-size: 12px;
+            background: #f39c12;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid white;
+            z-index: 10;
+        }
+
+        .position-tooltip {
+            position: absolute;
+            bottom: 120%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.8em;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 100;
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .position:hover .position-tooltip {
+            opacity: 1;
+        }
+
+        .position-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent;
+            border-top-color: rgba(0,0,0,0.9);
+        }
+
+        .position.zone-position .position-tooltip {
+            background: #f39c12;
+            border: 2px solid white;
+        }
+
+        .position.zone-position .position-tooltip::after {
+            border-top-color: #f39c12;
+        }
+
+        .position.zone-assignee {
+            position: relative;
+        }
+
+        .position.zone-assignee::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            width: 8px;
+            height: 8px;
+            background: #9b59b6;
+            border: 1px solid white;
+            border-radius: 50%;
+            z-index: 10;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 30px 0;
+            padding: 20px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            position: relative;
+        }
+
+        .legend-color.zone-highlight {
+            border: 3px solid #ecf0f1;
+            animation: zonePulse 2s infinite;
+        }
+
+        .legend-color.zone-marker::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            width: 6px;
+            height: 6px;
+            background: #9b59b6;
+            border: 1px solid white;
+            border-radius: 50%;
+        }
+
+        .search-section {
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            backdrop-filter: blur(10px);
+        }
+
+        .search-input::placeholder {
+            color: rgba(255,255,255,0.7);
+        }
+
+        .search-input:focus {
+            outline: none;
+            background: rgba(255,255,255,0.2);
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #bdc3c7;
+            font-size: 1.2em;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #bdc3c7;
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: rgba(231, 76, 60, 0.2);
+            border: 1px solid #e74c3c;
+            color: #e74c3c;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .zone-summary {
+            background: rgba(243, 156, 18, 0.1);
+            border: 2px solid #f39c12;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .zone-summary h3 {
+            color: #f39c12;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .zone-panels-list {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .zone-panel-item {
+            background: rgba(243, 156, 18, 0.2);
+            padding: 10px 15px;
+            border-radius: 10px;
+            border: 1px solid #f39c12;
+        }
+
+        .zone-panel-item strong {
+            color: #f39c12;
+        }
+
+        @media (max-width: 768px) {
+            .positions-grid {
+                grid-template-columns: repeat(8, 1fr);
+            }
+            
+            .controls {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .legend {
+                flex-wrap: wrap;
+                gap: 15px;
+            }
+
+            .zone-info-content {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .zone-details {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Vue Baie de Brassage</h1>
+            <div class="breadcrumb">
+                <span id="breadcrumbText">Visualisation complète des panneaux</span>
+            </div>
+        </div>
+
+        <!-- Bannière d'information de zone -->
+        <div id="zoneInfoBanner" class="zone-info-banner">
+            <div class="zone-info-content">
+                <div>
+                    <h2 id="zoneTitle">Zone Sélectionnée</h2>
+                    <p id="zoneDescription">Description de la zone</p>
+                </div>
+                <div class="zone-details">
+                    <div class="zone-stat">
+                        <div class="zone-stat-value" id="zonePanelCount">0</div>
+                        <div class="zone-stat-label">Panneau(x)</div>
+                    </div>
+                    <div class="zone-stat">
+                        <div class="zone-stat-value" id="zonePositionCount">0</div>
+                        <div class="zone-stat-label">Position(s)</div>
+                    </div>
+                </div>
+                <div>
+                    <button class="btn zone-focus" onclick="focusOnZone()">🎯 Recentrer sur Zone</button>
+                    <button class="btn secondary" onclick="clearZoneFocus()">✖ Effacer Sélection</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Résumé des panneaux de la zone -->
+        <div id="zoneSummary" class="zone-summary" style="display: none;">
+            <h3>📍 Panneaux utilisés par cette zone</h3>
+            <div id="zonePanelsList" class="zone-panels-list">
+                <!-- Généré dynamiquement -->
+            </div>
+        </div>
+
+        <div class="controls">
+            <div>
+                <a href="/" class="btn secondary">← Retour au plan</a>
+                <button class="btn" onclick="refreshData()">🔄 Actualiser</button>
+            </div>
+            
+            <div class="filter-controls">
+                <label for="viewMode" style="color: #ecf0f1;">Mode:</label>
+                <select id="viewMode" onchange="changeViewMode()">
+                    <option value="all">Vue complète</option>
+                    <option value="zone">Zone uniquement</option>
+                    <option value="relevant">Panneaux pertinents</option>
+                </select>
+                
+                <label for="filterType" style="color: #ecf0f1;">Filtrer:</label>
+                <select id="filterType" onchange="filterPanneaux()">
+                    <option value="all">Tous les panneaux</option>
+                    <option value="used">Panneaux utilisés</option>
+                    <option value="free">Panneaux avec places libres</option>
+                    <option value="special">Avec marqueurs spéciaux</option>
+                </select>
+                
+                <label for="sortType" style="color: #ecf0f1;">Trier:</label>
+                <select id="sortType" onchange="sortPanneaux()">
+                    <option value="id">Par numéro</option>
+                    <option value="usage">Par taux d'utilisation</option>
+                    <option value="name">Par nom</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="search-section">
+            <input type="text" class="search-input" placeholder="🔍 Rechercher une position (ex: 45, Borne 1, Name A)..." 
+                   id="searchInput" oninput="searchPositions()">
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background: #e74c3c;"></div>
+                <span>Position utilisée (câblée)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #27ae60;"></div>
+                <span>Position libre</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #f39c12;"></div>
+                <span>Marqueur spécial</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color zone-marker" style="background: #27ae60;"></div>
+                <span>Assignée à une zone</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color zone-highlight" style="background: #27ae60;"></div>
+                <span>Position de la zone active</span>
+            </div>
+        </div>
+
+        <div class="baie-container">
+            <div id="panneauxContainer" class="loading">Chargement des données...</div>
+        </div>
+    </div>
+
+    <script>
+        let panneauxData = null;
+        let dispositionData = null;
+        let currentZoneData = null;
+        let currentFilter = 'all';
+        let currentSort = 'id';
+        let currentViewMode = 'all';
+
+        // Charger les données au démarrage
+        document.addEventListener('DOMContentLoaded', function() {
+            loadBaieData();
+            parseURLParameters();
+        });
+
+        function parseURLParameters() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const zoneId = urlParams.get('zone');
+            const isMulti = urlParams.get('multi');
+            
+            if (zoneId && isMulti) {
+                // Mode multi-panneaux
+                const panneauxToHighlight = [];
+                let index = 0;
+                
+                while (urlParams.get(`panneau${index}`) !== null) {
+                    const panneauId = parseInt(urlParams.get(`panneau${index}`));
+                    const positions = urlParams.get(`positions${index}`);
+                    
+                    if (positions) {
+                        const positionsList = positions.split(',').map(pos => parseInt(pos));
+                        panneauxToHighlight.push({
+                            panneauId: panneauId,
+                            positions: positionsList
+                        });
+                    }
+                    index++;
+                }
+                
+                if (panneauxToHighlight.length > 0) {
+                    currentZoneData = {
+                        zoneId: zoneId,
+                        panneaux: panneauxToHighlight
+                    };
+                    
+                    const totalPositions = panneauxToHighlight.reduce((total, p) => total + p.positions.length, 0);
+                    document.getElementById('breadcrumbText').textContent = 
+                        `Zone ${zoneId} - ${panneauxToHighlight.length} panneau(x) - ${totalPositions} position(s)`;
+                    
+                    // Activer le mode zone par défaut
+                    document.getElementById('viewMode').value = 'relevant';
+                    currentViewMode = 'relevant';
+                    
+                    showZoneInfo(zoneId, panneauxToHighlight);
+                }
+            } else {
+                // Mode single panneau (compatibilité)
+                const panneauId = urlParams.get('panneau');
+                const positions = urlParams.get('positions');
+                
+                if (zoneId && panneauId && positions) {
+                    const positionsList = positions.split(',').map(pos => parseInt(pos));
+                    currentZoneData = {
+                        zoneId: zoneId,
+                        panneaux: [{
+                            panneauId: parseInt(panneauId),
+                            positions: positionsList
+                        }]
+                    };
+                    
+                    document.getElementById('breadcrumbText').textContent = 
+                        `Zone ${zoneId} - Panneau ${panneauId} - ${positionsList.length} position(s)`;
+                    
+                    document.getElementById('viewMode').value = 'relevant';
+                    currentViewMode = 'relevant';
+                    
+                    showZoneInfo(zoneId, currentZoneData.panneaux);
+                }
+            }
+        }
+
+        function showZoneInfo(zoneId, panneauxData) {
+            // Trouver les informations de la zone
+            let zoneInfo = null;
+            if (dispositionData && dispositionData.zones) {
+                zoneInfo = dispositionData.zones.find(z => z.id == zoneId);
+            }
+            
+            const banner = document.getElementById('zoneInfoBanner');
+            const summary = document.getElementById('zoneSummary');
+            
+            // Mise à jour de la bannière
+            document.getElementById('zoneTitle').textContent = zoneInfo ? zoneInfo.nom : `Zone ${zoneId}`;
+            document.getElementById('zoneDescription').textContent = zoneInfo ? `Type: ${zoneInfo.type}` : 'Informations de zone';
+            document.getElementById('zonePanelCount').textContent = panneauxData.length;
+            
+            const totalPositions = panneauxData.reduce((total, p) => total + p.positions.length, 0);
+            document.getElementById('zonePositionCount').textContent = totalPositions;
+            
+            banner.classList.add('active');
+            
+            // Mise à jour du résumé des panneaux
+            const panelsList = document.getElementById('zonePanelsList');
+            panelsList.innerHTML = panneauxData.map(p => {
+                const panneauInfo = panneauxData ? panneauxData.panneaux?.find(panel => panel.id === p.panneauId) : null;
+                const panneauName = panneauInfo ? panneauInfo.nom : `Panneau ${p.panneauId}`;
+                return `
+                    <div class="zone-panel-item">
+                        <strong>${panneauName}</strong><br>
+                        ${p.positions.length} position(s)<br>
+                        <small>[${p.positions.join(', ')}]</small>
+                    </div>
+                `;
+            }).join('');
+            
+            summary.style.display = 'block';
+        }
+
+        async function loadBaieData() {
+            try {
+                // Charger les données des panneaux
+                const panneauxResponse = await fetch('/api/panneaux');
+                panneauxData = await panneauxResponse.json();
+                
+                if (panneauxData.error) {
+                    throw new Error(panneauxData.error);
+                }
+                
+                // Charger les données des zones
+                const dispositionResponse = await fetch('/api/disposition');
+                dispositionData = await dispositionResponse.json();
+                
+                renderBaie();
+            } catch (error) {
+                console.error('Erreur lors du chargement:', error);
+                document.getElementById('panneauxContainer').innerHTML = 
+                    `<div class="error">Erreur: ${error.message}</div>`;
+            }
+        }
+
+        function renderBaie() {
+            const container = document.getElementById('panneauxContainer');
+            
+            if (!panneauxData || !panneauxData.panneaux) {
+                container.innerHTML = '<div class="no-results">Aucune donnée disponible</div>';
+                return;
+            }
+
+            let panneaux = [...panneauxData.panneaux];
+            
+            // Appliquer le mode de vue
+            panneaux = applyViewMode(panneaux);
+            
+            // Appliquer le filtre
+            panneaux = applyFilter(panneaux);
+            
+            // Appliquer le tri
+            panneaux = applySort(panneaux);
+
+            if (panneaux.length === 0) {
+                container.innerHTML = '<div class="no-results">Aucun panneau ne correspond aux critères</div>';
+                return;
+            }
+
+            container.innerHTML = panneaux.map(panneau => renderPanneau(panneau)).join('');
+            
+            // Appliquer les highlights de zone après le rendu
+            if (currentZoneData) {
+                highlightZonePositions();
+                
+                // Scroll vers le premier panneau de la zone
+                setTimeout(() => {
+                    const firstZonePanneau = document.querySelector('.panneau.zone-panneau');
+                    if (firstZonePanneau) {
+                        firstZonePanneau.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }, 100);
+            }
+        }
+
+        function renderPanneau(panneau) {
+            // Vérifier si ce panneau fait partie de la zone
+            const isZonePanneau = currentZoneData && 
+                currentZoneData.panneaux.some(zp => zp.panneauId === panneau.id);
+            
+            const shouldDim = currentViewMode === 'zone' && !isZonePanneau;
+            
+            return `
+                <div class="panneau ${isZonePanneau ? 'zone-panneau' : ''} ${shouldDim ? 'dimmed' : ''}" 
+                     id="panneau-${panneau.id}">
+                    <div class="panneau-header">
+                        <div class="panneau-title">${panneau.nom}</div>
+                        <div class="panneau-stats">
+                            <div class="stat utilisees">
+                                <div class="stat-value">${panneau.statistiques.utilise}</div>
+                                <div class="stat-label">Utilisées</div>
+                            </div>
+                            <div class="stat libres">
+                                <div class="stat-value">${panneau.statistiques.libre}</div>
+                                <div class="stat-label">Libres</div>
+                            </div>
+                            <div class="stat taux">
+                                <div class="stat-value">${panneau.statistiques.taux_utilisation}</div>
+                                <div class="stat-label">Taux</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="positions-grid">
+                        ${renderPositions(panneau)}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderPositions(panneau) {
+            const positions = [];
+            
+            // Récupérer les positions assignées aux zones pour ce panneau
+            const positionsAssignees = getPositionsAssigneesZones(panneau.id);
+            const assigneesMap = {};
+            positionsAssignees.forEach(item => {
+                assigneesMap[item.position] = item.zone;
+            });
+            
+            // Déterminer les positions de la zone active
+            const zonePositions = currentZoneData ? 
+                currentZoneData.panneaux.find(zp => zp.panneauId === panneau.id)?.positions || [] : [];
+            
+            // Créer un objet pour les positions totales
+            const allPositions = {};
+            panneau.positions_totales.forEach(pos => {
+                allPositions[pos] = {
+                    numero: pos,
+                    status: panneau.positions_utilisees.includes(pos) ? 'utilisee' : 'libre',
+                    special: panneau.marqueurs_speciaux[pos] || null,
+                    zoneAssignee: assigneesMap[pos] || null,
+                    isZonePosition: zonePositions.includes(pos)
+                };
+            });
+
+            // Rendre les positions dans l'ordre
+            for (let i = 1; i <= 49; i++) {
+                const pos = panneau.positions_totales[i - 1];
+                if (pos) {
+                    const position = allPositions[pos];
+                    const isSpecial = position.special !== null;
+                    const isAssignee = position.zoneAssignee !== null;
+                    const isZonePos = position.isZonePosition;
+                    const className = isSpecial ? 'special' : position.status;
+                    
+                    let tooltipContent = `Position: ${pos}<br>`;
+                    tooltipContent += `Status: ${isSpecial ? position.special : (position.status === 'utilisee' ? 'Utilisée (câblée)' : 'Libre')}<br>`;
+                    if (isAssignee) {
+                        tooltipContent += `Zone: ${position.zoneAssignee}<br>`;
+                    }
+                    if (isZonePos) {
+                        tooltipContent += `🎯 Position de la zone active<br>`;
+                    }
+                    tooltipContent += `Panneau: ${panneau.nom}`;
+                    
+                    positions.push(`
+                        <div class="position ${className} ${isAssignee ? 'zone-assignee' : ''} ${isZonePos ? 'zone-position' : ''}" 
+                             data-position="${pos}" 
+                             data-panneau="${panneau.id}"
+                             onclick="highlightPosition(${pos}, ${panneau.id})">
+                            <span>${pos}</span>
+                            <div class="position-tooltip">
+                                ${tooltipContent}
+                            </div>
+                        </div>
+                    `);
+                } else {
+                    positions.push('<div class="position" style="visibility: hidden;"></div>');
+                }
+            }
+            
+            return positions.join('');
+        }
+
+        function highlightZonePositions() {
+            if (!currentZoneData) return;
+            
+            currentZoneData.panneaux.forEach(zp => {
+                zp.positions.forEach(pos => {
+                    const element = document.querySelector(`[data-position="${pos}"][data-panneau="${zp.panneauId}"]`);
+                    if (element) {
+                        element.classList.add('zone-position');
+                    }
+                });
+            });
+        }
+
+        function getPositionsAssigneesZones(panneauId) {
+            const positionsAssignees = [];
+            if (dispositionData && dispositionData.zones) {
+                dispositionData.zones.forEach(zone => {
+                    // Nouveau format multi-panneaux
+                    if (zone.panneaux && Array.isArray(zone.panneaux)) {
+                        zone.panneaux.forEach(p => {
+                            if (p.id === panneauId) {
+                                p.positions.forEach(pos => {
+                                    positionsAssignees.push({
+                                        position: pos,
+                                        zone: zone.nom
+                                    });
+                                });
+                            }
+                        });
+                    }
+                    // Ancien format single panneau (compatibilité)
+                    else if (zone.panneau && zone.panneau.id === panneauId) {
+                        zone.panneau.positions.forEach(pos => {
+                            positionsAssignees.push({
+                                position: pos,
+                                zone: zone.nom
+                            });
+                        });
+                    }
+                });
+            }
+            return positionsAssignees;
+        }
+
+        function highlightPosition(position, panneauId) {
+            // Retirer tous les highlights précédents (sauf les positions de zone)
+            document.querySelectorAll('.position.highlighted').forEach(el => {
+                el.classList.remove('highlighted');
+            });
+
+            // Ajouter le highlight à la position cliquée
+            const element = document.querySelector(`[data-position="${position}"][data-panneau="${panneauId}"]`);
+            if (element) {
+                element.classList.add('highlighted');
+                
+                // Scroll vers l'élément
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        function applyViewMode(panneaux) {
+            if (!currentZoneData) return panneaux;
+            
+            switch (currentViewMode) {
+                case 'zone':
+                    // Afficher tous mais dimmer ceux qui ne sont pas dans la zone
+                    return panneaux;
+                case 'relevant':
+                    // Afficher seulement les panneaux de la zone
+                    const zonePanneauxIds = currentZoneData.panneaux.map(zp => zp.panneauId);
+                    return panneaux.filter(p => zonePanneauxIds.includes(p.id));
+                default:
+                    return panneaux;
+            }
+        }
+
+        function applyFilter(panneaux) {
+            switch (currentFilter) {
+                case 'used':
+                    return panneaux.filter(p => p.statistiques.utilise > 0);
+                case 'free':
+                    return panneaux.filter(p => p.statistiques.libre > 0);
+                case 'special':
+                    return panneaux.filter(p => Object.keys(p.marqueurs_speciaux).length > 0);
+                default:
+                    return panneaux;
+            }
+        }
+
+        function applySort(panneaux) {
+            switch (currentSort) {
+                case 'usage':
+                    return panneaux.sort((a, b) => 
+                        parseFloat(b.statistiques.taux_utilisation) - parseFloat(a.statistiques.taux_utilisation)
+                    );
+                case 'name':
+                    return panneaux.sort((a, b) => a.nom.localeCompare(b.nom));
+                default:
+                    return panneaux.sort((a, b) => a.id - b.id);
+            }
+        }
+
+        function changeViewMode() {
+            currentViewMode = document.getElementById('viewMode').value;
+            renderBaie();
+        }
+
+        function filterPanneaux() {
+            currentFilter = document.getElementById('filterType').value;
+            renderBaie();
+        }
+
+        function sortPanneaux() {
+            currentSort = document.getElementById('sortType').value;
+            renderBaie();
+        }
+
+        function focusOnZone() {
+            if (!currentZoneData) return;
+            
+            // Changer le mode de vue
+            document.getElementById('viewMode').value = 'relevant';
+            currentViewMode = 'relevant';
+            renderBaie();
+            
+            // Scroll vers le premier panneau
+            setTimeout(() => {
+                const firstZonePanneau = document.querySelector('.panneau.zone-panneau');
+                if (firstZonePanneau) {
+                    firstZonePanneau.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, 100);
+        }
+
+        function clearZoneFocus() {
+            currentZoneData = null;
+            document.getElementById('zoneInfoBanner').classList.remove('active');
+            document.getElementById('zoneSummary').style.display = 'none';
+            document.getElementById('viewMode').value = 'all';
+            currentViewMode = 'all';
+            
+            // Retirer toutes les classes zone
+            document.querySelectorAll('.zone-position, .zone-panneau, .dimmed').forEach(el => {
+                el.classList.remove('zone-position', 'zone-panneau', 'dimmed');
+            });
+            
+            // Mettre à jour le breadcrumb
+            document.getElementById('breadcrumbText').textContent = 'Visualisation complète des panneaux';
+            
+            renderBaie();
+        }
+
+        function searchPositions() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            
+            // Retirer tous les highlights précédents (sauf zone-position)
+            document.querySelectorAll('.position.highlighted').forEach(el => {
+                el.classList.remove('highlighted');
+            });
+            document.querySelectorAll('.panneau.highlighted').forEach(el => {
+                el.classList.remove('highlighted');
+            });
+
+            if (!searchTerm) return;
+
+            let found = false;
+
+            // Rechercher dans les positions
+            document.querySelectorAll('.position').forEach(pos => {
+                const positionNumber = pos.getAttribute('data-position');
+                const tooltip = pos.querySelector('.position-tooltip');
+                
+                if (positionNumber && positionNumber.includes(searchTerm)) {
+                    pos.classList.add('highlighted');
+                    if (!found) {
+                        pos.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        found = true;
+                    }
+                } else if (tooltip && tooltip.textContent.toLowerCase().includes(searchTerm)) {
+                    pos.classList.add('highlighted');
+                    if (!found) {
+                        pos.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        found = true;
+                    }
+                }
+            });
+
+            // Rechercher dans les noms de panneaux
+            document.querySelectorAll('.panneau').forEach(panneau => {
+                const title = panneau.querySelector('.panneau-title');
+                if (title && title.textContent.toLowerCase().includes(searchTerm)) {
+                    panneau.classList.add('highlighted');
+                    if (!found) {
+                        panneau.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        found = true;
+                    }
+                }
+            });
+        }
+
+        function refreshData() {
+            document.getElementById('panneauxContainer').innerHTML = '<div class="loading">Actualisation...</div>';
+            loadBaieData();
+        }
+
+        // Raccourci clavier pour la recherche
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'f') {
+                e.preventDefault();
+                document.getElementById('searchInput').focus();
+            }
+            
+            // Échap pour effacer la sélection de zone
+            if (e.key === 'Escape' && currentZoneData) {
+                clearZoneFocus();
+            }
+        });
+
+        // Gestion du clic sur les positions pour naviguer vers des détails
+        function showPositionDetails(position, panneauId) {
+            // Afficher plus d'informations sur la position
+            const element = document.querySelector(`[data-position="${position}"][data-panneau="${panneauId}"]`);
+            if (element) {
+                const tooltip = element.querySelector('.position-tooltip');
+                if (tooltip) {
+                    // Créer une modal ou un popup avec les détails
+                    console.log(`Détails de la position ${position} du panneau ${panneauId}`);
+                }
+            }
+        }
+
+        // Amélioration de l'affichage des tooltips
+        document.addEventListener('mouseover', function(e) {
+            if (e.target.classList.contains('position')) {
+                const tooltip = e.target.querySelector('.position-tooltip');
+                if (tooltip) {
+                    // Ajuster la position du tooltip si nécessaire
+                    const rect = e.target.getBoundingClientRect();
+                    const tooltipRect = tooltip.getBoundingClientRect();
+                    
+                    if (rect.top < 100) {
+                        tooltip.style.bottom = 'auto';
+                        tooltip.style.top = '120%';
+                    }
+                    
+                    if (rect.left < 100) {
+                        tooltip.style.left = '0';
+                        tooltip.style.transform = 'translateX(0)';
+                    } else if (rect.right > window.innerWidth - 100) {
+                        tooltip.style.left = 'auto';
+                        tooltip.style.right = '0';
+                        tooltip.style.transform = 'translateX(0)';
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

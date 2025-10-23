@@ -1,0 +1,1851 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patch Map</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(5deg, #00b4db 0%, #100052 100%); /* bleu -> vert-bleu océan */
+            min-height: 100vh;
+            padding: 20px;
+            color: #fff;
+        }
+
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #100052 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 0;
+            min-height: 600px;
+        }
+
+        .plan-section {
+            position: relative;
+            background: #f8f9fa;
+            padding: 20px;
+            border-right: 1px solid #dee2e6;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .plan-container {
+            position: relative;
+            width: 100%;
+            flex: 1;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #fff;
+            cursor: crosshair;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 500px;
+        }
+
+        .image-wrapper {
+            position: relative;
+            max-width: 100%;
+            max-height: 100%;
+            display: inline-block;
+        }
+
+        .plan-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            display: block;
+            width: auto;
+            height: auto;
+        }
+
+        .zone-marker {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #e74c3c;
+            border: 3px solid white;
+            border-radius: 50%;
+            cursor: pointer;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+
+        .zone-marker:hover {
+            transform: translate(-50%, -50%) scale(1.3);
+            background: #c0392b;
+        }
+
+        .zone-marker.selected {
+            background: #27ae60;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(39, 174, 96, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(39, 174, 96, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(39, 174, 96, 0); }
+        }
+
+        .sidebar {
+            background: white;
+            padding: 20px;
+            border-left: 1px solid #dee2e6;
+        }
+
+        .controls {
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            margin: 5px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .btn.danger {
+            background: #e74c3c;
+        }
+
+        .btn.danger:hover {
+            background: #c0392b;
+        }
+
+        .btn.success {
+            background: #27ae60;
+        }
+
+        .btn.success:hover {
+            background: #219a52;
+        }
+
+        .stats-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #3498db;
+        }
+
+        .stats-card h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding: 5px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+
+        .stat-value {
+            font-weight: bold;
+            color: #27ae60;
+        }
+
+        .zones-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .zone-item {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .zone-item:hover {
+            background: #f8f9fa;
+            border-color: #3498db;
+        }
+
+        .zone-item.selected {
+            background: #e8f5e8;
+            border-color: #27ae60;
+        }
+
+        .zone-name {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .zone-info {
+            font-size: 0.9em;
+            color: #7f8c8d;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 2% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .modal h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #7f8c8d;
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #dee2e6;
+            border-top: 2px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .positions-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+            gap: 6px;
+            margin: 15px 0;
+            padding: 15px;
+            border: 2px dashed #dee2e6;
+            border-radius: 10px;
+            background: #f8f9fa;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .position-item {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #dee2e6;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            font-size: 0.75em;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            position: relative;
+            min-width: 35px;
+            min-height: 35px;
+        }
+
+        .position-item:hover {
+            transform: scale(1.05);
+            border-color: #3498db;
+        }
+
+        .position-item.utilisee {
+            background: #e74c3c;
+            color: white;
+            border-color: #c0392b;
+        }
+
+        .position-item.libre {
+            background: #27ae60;
+            color: white;
+            border-color: #219a52;
+        }
+
+        .position-item.special {
+            background: #f39c12;
+            color: white;
+            border-color: #e67e22;
+        }
+
+        .position-item.selected {
+            background: #3498db !important;
+            color: white !important;
+            border-color: #2980b9 !important;
+            box-shadow: 0 0 15px rgba(52, 152, 219, 0.7) !important;
+            transform: scale(1.05) !important;
+            z-index: 10;
+        }
+
+        .position-item.selected::before {
+            content: '✓';
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            font-size: 0.7em;
+            font-weight: bold;
+            color: white;
+        }
+
+        .position-item.zone-utilisee {
+            background: #9b59b6 !important;
+            color: white;
+            border-color: #8e44ad;
+            position: relative;
+        }
+
+        .position-item.zone-utilisee::after {
+            content: '🔒';
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            font-size: 0.6em;
+        }
+
+        .position-tooltip {
+            position: absolute;
+            bottom: 110%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.7em;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 100;
+        }
+
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #c62828;
+        }
+
+        /* Menu contextuel */
+        .context-menu {
+            position: fixed;
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1001;
+            min-width: 150px;
+            display: none;
+        }
+
+        .context-menu-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            border-bottom: 1px solid #f1f3f4;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background-color 0.2s ease;
+        }
+
+        .context-menu-item:last-child {
+            border-bottom: none;
+        }
+
+        .context-menu-item:hover {
+            background: #f8f9fa;
+        }
+
+        .context-menu-item.danger {
+            color: #e74c3c;
+        }
+
+        .context-menu-item.danger:hover {
+            background: #ffebee;
+        }
+
+        /* Mode édition */
+        .zone-marker.editing {
+            background: #f39c12;
+            animation: editPulse 1.5s infinite;
+        }
+
+        @keyframes editPulse {
+            0% { box-shadow: 0 0 0 0 rgba(243, 156, 18, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(243, 156, 18, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(243, 156, 18, 0); }
+        }
+
+        .modal-content.edit-mode h2 {
+            color: #f39c12;
+        }
+
+        .zone-item .zone-actions {
+            margin-top: 8px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .panneau-item {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .panneau-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .panneau-select {
+            flex: 1;
+            min-width: 200px;
+            padding: 8px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+        }
+
+        .btn-remove-panneau {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 10px;
+            cursor: pointer;
+            font-size: 0.8em;
+            white-space: nowrap;
+        }
+
+        .btn-remove-panneau:hover {
+            background: #c0392b;
+        }
+
+        .panneau-positions {
+            display: none;
+        }
+
+        .panneau-stats {
+            font-size: 0.9em;
+            color: #7f8c8d;
+            margin-bottom: 10px;
+            padding: 5px 0;
+        }
+
+        .btn-small {
+            padding: 4px 8px;
+            font-size: 0.75em;
+            border-radius: 4px;
+        }
+
+        .image-info {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.8em;
+            z-index: 5;
+        }
+
+        .logout-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
+            background: linear-gradient(135deg, #c0392b, #a93226);
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                border-left: none;
+                border-top: 1px solid #dee2e6;
+            }
+            
+            .modal-content {
+                width: 95%;
+                margin: 1% auto;
+                padding: 20px;
+            }
+            
+            .panneau-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .panneau-select {
+                min-width: auto;
+                margin-bottom: 10px;
+            }
+
+            .logout-btn {
+                top: 10px;
+                right: 10px;
+                padding: 8px 15px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="logout-btn" onclick="logout()" title="Se déconnecter">
+        🚪 Déconnexion
+    </button>
+
+    <div class="container">
+        <div class="header">
+            <h1>🔌 Gestion Panneaux de Brassage</h1>
+            <p>Visualisation et gestion des prises réseau</p>
+        </div>
+
+        <div class="main-content">
+            <div class="plan-section">
+                <div class="plan-container" id="planContainer">
+                    <div class="image-wrapper" id="imageWrapper">
+                        <img src="/static/image.png" alt="Plan de l'établissement" class="plan-image" id="planImage">
+                        <div class="image-info" id="imageInfo">
+                            Taille: <span id="imageSize">-</span>
+                        </div>
+                        <!-- Les zones seront ajoutées ici -->
+                    </div>
+                </div>
+                <button class="btn" id="dragModeBtn" onclick="toggleDragMode()">📍 Déplacer Zones</button>
+                <div style="margin-top: 15px; text-align: center;">
+                    <small style="color: #7f8c8d;">Cliquez sur le plan pour ajouter une zone de prises</small>
+                </div>
+            </div>
+
+            <div class="sidebar">
+                <div class="controls">
+                    <button class="btn success" onclick="addZoneMode()">➕ Ajouter Zone</button>
+                    <a href="/baie" class="btn">🔍 Vue Baie</a>
+                    <button class="btn" onclick="loadData()">🔄 Actualiser</button>
+                    <a href="/admin/panneaux" class="btn">Administre la Baie</a>
+                </div>
+
+       
+
+              
+                <div class="stats-card">
+                    <h3>📊 Statistiques Globales</h3>
+                    <div id="globalStats" class="loading">Chargement...</div>
+                </div>
+
+                <div class="stats-card">
+                    <h3>📍 Zones Configurées</h3>
+                    <div id="zonesList" class="zones-list loading">Chargement...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Menu contextuel -->
+    <div id="contextMenu" class="context-menu">
+        <div class="context-menu-item" onclick="editZone()">
+            ✏️ Modifier la zone
+        </div>
+        <div class="context-menu-item" onclick="duplicateZone()">
+            📋 Dupliquer la zone
+        </div>
+        <div class="context-menu-item danger" onclick="deleteZone()">
+            🗑️ Supprimer la zone
+        </div>
+    </div>
+
+    <!-- Modal pour ajouter/modifier une zone -->
+    <div id="zoneModal" class="modal">
+        <div class="modal-content" id="modalContent">
+            <h2 id="modalTitle">Nouvelle Zone de Prises</h2>
+            <form id="zoneForm">
+                <div class="form-group">
+                    <label for="zoneName">Nom:</label>
+                    <input type="text" id="zoneName" required placeholder="Ex: Bureau 101 ou Imprimante RDC">
+                </div>
+                
+                <div class="form-group">
+                    <label for="zoneType">Type:</label>
+                    <select id="zoneType" required onchange="handleTypeChange()">
+                        <option value="bureau">Bureau</option>
+                        <option value="salle_reunion">Salle de réunion</option>
+                        <option value="couloir">Couloir</option>
+                        <option value="technique">Local technique</option>
+                        <option value="autre">Autre</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="materielType">Matériel Tiers:</label>
+                    <select id="materielType" onchange="handleMaterielChange()">
+                        <option value="">-- Aucun (Prise réseau standard) --</option>
+                        <option value="imprimante">🖨️ Imprimante</option>
+                        <option value="borne_wifi">📡 Point d'accès WiFi</option>
+                        <option value="camera">📹 Caméra de surveillance</option>
+                        <option value="telephone">☎️ Téléphone IP</option>
+                        <option value="serveur">🖥️ Serveur</option>
+                        <option value="switch">🔀 Switch réseau</option>
+                        <option value="autre_materiel">⚙️ Autre matériel</option>
+                    </select>
+                </div>
+
+                <!-- Section pour les panneaux (visible seulement si pas de matériel tiers) -->
+                <div id="panneauxSection" class="form-group">
+                    <label>Panneaux et positions:</label>
+                    <div id="panneauxMultiples">
+                        <!-- Panneaux multiples générés dynamiquement -->
+                    </div>
+                    <button type="button" class="btn" onclick="ajouterPanneau()">➕ Ajouter un panneau</button>
+                </div>
+
+                <!-- Section pour les infos matériel (visible seulement si matériel tiers sélectionné) -->
+                <div id="materielSection" style="display: none;">
+                    <div class="form-group">
+                        <label for="materielMarque">Marque / Modèle (optionnel):</label>
+                        <input type="text" id="materielMarque" placeholder="Ex: HP LaserJet Pro, Cisco AP-2802">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="materielIP">Adresse IP (optionnel):</label>
+                        <input type="text" id="materielIP" placeholder="Ex: 192.168.1.100">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="materielMAC">Adresse MAC (optionnel):</label>
+                        <input type="text" id="materielMAC" placeholder="Ex: 00:1A:2B:3C:4D:5E">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="materielNotes">Notes (optionnel):</label>
+                        <textarea id="materielNotes" rows="3" style="width: 100%; padding: 12px; border: 2px solid #dee2e6; border-radius: 8px; font-size: 14px; font-family: inherit;" placeholder="Notes additionnelles..."></textarea>
+                    </div>
+                </div>
+
+                <div style="text-align: right; margin-top: 30px;">
+                    <button type="button" class="btn danger" onclick="closeModal()">Annuler</button>
+                    <button type="submit" class="btn success" id="submitBtn">Créer Zone</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let isAddingZone = false;
+        let currentClickPosition = null;
+        let panneauxData = null;
+        let dispositionData = null;
+        let selectedZone = null;
+        let selectedPositions = {};
+        let rightClickedZone = null;
+        let isEditMode = false;
+        let editingZoneId = null;
+        let panneauCounter = 0;
+
+        // Variables pour gérer le positionnement fixe
+        let imageNaturalWidth = 0;
+        let imageNaturalHeight = 0;
+
+        // Variables pour le mode déplacement (NOUVELLES)
+        let isDraggingMode = false;
+        let draggedZoneId = null;
+        let dragStartX = 0;
+        let dragStartY = 0;
+        // Fonction de déconnexion
+        async function logout() {
+            if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+                try {
+                    const response = await fetch('/api/auth/logout', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        window.location.href = '/login';
+                    }
+                } catch (error) {
+                    console.error('Erreur lors de la déconnexion:', error);
+                    window.location.href = '/logout';
+                }
+            }
+        }
+        function toggleDragMode() {
+            isDraggingMode = !isDraggingMode;
+            const btn = document.getElementById('dragModeBtn');
+            const planContainer = document.getElementById('planContainer');
+            
+            if (isDraggingMode) {
+                btn.textContent = '✅ Mode Déplacement Actif';
+                btn.style.background = '#f39c12';
+                planContainer.style.cursor = 'move';
+                
+                // Activer le drag sur tous les marqueurs
+                document.querySelectorAll('.zone-marker').forEach(marker => {
+                    marker.style.cursor = 'move';
+                    marker.draggable = true;
+                });
+                
+                // Désactiver le mode ajout de zone si actif
+                if (isAddingZone) {
+                    cancelAddZone();
+                }
+            } else {
+                btn.textContent = '📍 Déplacer Zones';
+                btn.style.background = '#3498db';
+                planContainer.style.cursor = 'crosshair';
+                
+                // Désactiver le drag
+                document.querySelectorAll('.zone-marker').forEach(marker => {
+                    marker.style.cursor = 'pointer';
+                    marker.draggable = false;
+                });
+            }
+        }
+
+        function setupDragHandlers(marker, zone) {
+            marker.addEventListener('mousedown', function(e) {
+                if (!isDraggingMode) return;
+                
+                e.preventDefault();
+                e.stopPropagation();
+                
+                draggedZoneId = zone.id;
+                dragStartX = e.clientX;
+                dragStartY = e.clientY;
+                
+                marker.style.opacity = '0.5';
+                marker.style.zIndex = '1000';
+                
+                document.addEventListener('mousemove', onMarkerDrag);
+                document.addEventListener('mouseup', onMarkerDragEnd);
+            });
+        }
+
+        function onMarkerDrag(e) {
+            if (!draggedZoneId) return;
+            
+            const marker = document.querySelector(`[data-zone-id="${draggedZoneId}"]`);
+            if (!marker) return;
+            
+            const deltaX = e.clientX - dragStartX;
+            const deltaY = e.clientY - dragStartY;
+            
+            const planImage = document.getElementById('planImage');
+            const imageRect = planImage.getBoundingClientRect();
+            const wrapperRect = document.getElementById('imageWrapper').getBoundingClientRect();
+            
+            // Position actuelle du marker
+            const currentLeft = parseFloat(marker.style.left) || 0;
+            const currentTop = parseFloat(marker.style.top) || 0;
+            
+            // Nouvelle position
+            let newLeft = currentLeft + deltaX;
+            let newTop = currentTop + deltaY;
+            
+            // Limiter aux bordures de l'image
+            const minLeft = imageRect.left - wrapperRect.left;
+            const maxLeft = minLeft + imageRect.width;
+            const minTop = imageRect.top - wrapperRect.top;
+            const maxTop = minTop + imageRect.height;
+            
+            newLeft = Math.max(minLeft, Math.min(maxLeft, newLeft));
+            newTop = Math.max(minTop, Math.min(maxTop, newTop));
+            
+            marker.style.left = newLeft + 'px';
+            marker.style.top = newTop + 'px';
+            
+            dragStartX = e.clientX;
+            dragStartY = e.clientY;
+        }
+
+        async function onMarkerDragEnd(e) {
+            if (!draggedZoneId) return;
+            
+            const marker = document.querySelector(`[data-zone-id="${draggedZoneId}"]`);
+            if (!marker) return;
+            
+            marker.style.opacity = '1';
+            marker.style.zIndex = '10';
+            
+            // Calculer les nouvelles coordonnées en pourcentage
+            const planImage = document.getElementById('planImage');
+            const imageRect = planImage.getBoundingClientRect();
+            const wrapperRect = document.getElementById('imageWrapper').getBoundingClientRect();
+            
+            const markerLeft = parseFloat(marker.style.left);
+            const markerTop = parseFloat(marker.style.top);
+            
+            const relativeX = markerLeft - (imageRect.left - wrapperRect.left);
+            const relativeY = markerTop - (imageRect.top - wrapperRect.top);
+            
+            const percentX = (relativeX / imageRect.width) * 100;
+            const percentY = (relativeY / imageRect.height) * 100;
+            
+            // Sauvegarder la nouvelle position
+            await saveZonePosition(draggedZoneId, percentX, percentY);
+            
+            document.removeEventListener('mousemove', onMarkerDrag);
+            document.removeEventListener('mouseup', onMarkerDragEnd);
+            
+            draggedZoneId = null;
+        }
+
+        async function saveZonePosition(zoneId, x, y) {
+            try {
+                const zone = dispositionData.zones.find(z => z.id === zoneId);
+                if (!zone) return;
+                
+                const response = await fetch(`/api/disposition/${zoneId}/position`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ x, y })
+                });
+                
+                if (response.ok) {
+                    // Mettre à jour les données locales
+                    zone.x = x;
+                    zone.y = y;
+                    
+                    console.log(`Position de la zone ${zoneId} sauvegardée: ${x.toFixed(2)}%, ${y.toFixed(2)}%`);
+                } else {
+                    const errorData = await response.json();
+                    console.error('Erreur lors de la sauvegarde:', errorData);
+                    alert(`Erreur: ${errorData.error || 'Impossible de sauvegarder la position'}`);
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                alert(`Erreur: ${error.message}`);
+            }
+        }
+
+        // Vérification périodique de la session
+        setInterval(async () => {
+            try {
+                const response = await fetch('/api/auth/status');
+                const data = await response.json();
+                
+                if (!data.authenticated) {
+                    alert('Votre session a expiré. Vous allez être redirigé vers la page de connexion.');
+                    window.location.href = '/login';
+                }
+            } catch (error) {
+                console.error('Erreur de vérification de session:', error);
+            }
+        }, 60000);
+
+        // Charger les données au démarrage
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            setupImageHandling();
+        });
+
+        function setupImageHandling() {
+            const planImage = document.getElementById('planImage');
+            
+            planImage.onload = function() {
+                imageNaturalWidth = this.naturalWidth;
+                imageNaturalHeight = this.naturalHeight;
+                
+                // Mettre à jour l'info de taille
+                document.getElementById('imageSize').textContent = `${imageNaturalWidth}x${imageNaturalHeight}`;
+                
+                // Recalculer toutes les positions des zones
+                updateAllZonePositions();
+                
+                console.log('Image chargée:', imageNaturalWidth, 'x', imageNaturalHeight);
+            };
+
+            // Observer les changements de taille du conteneur
+            if (window.ResizeObserver) {
+                const resizeObserver = new ResizeObserver(() => {
+                    updateAllZonePositions();
+                });
+                resizeObserver.observe(document.getElementById('imageWrapper'));
+            }
+
+            // Fallback pour les navigateurs plus anciens
+            window.addEventListener('resize', () => {
+                setTimeout(updateAllZonePositions, 100);
+            });
+        }
+
+        function getImageCoordinates(clientX, clientY) {
+            const imageWrapper = document.getElementById('imageWrapper');
+            const planImage = document.getElementById('planImage');
+            
+            if (!imageWrapper || !planImage) return null;
+
+            const imageRect = planImage.getBoundingClientRect();
+            const wrapperRect = imageWrapper.getBoundingClientRect();
+            
+            // Coordonnées relatives à l'image visible
+            const relativeX = clientX - imageRect.left;
+            const relativeY = clientY - imageRect.top;
+            
+            // Vérifier si le clic est dans l'image
+            if (relativeX < 0 || relativeY < 0 || relativeX > imageRect.width || relativeY > imageRect.height) {
+                return null;
+            }
+            
+            // Convertir en pourcentages par rapport à l'image naturelle
+            const percentX = (relativeX / imageRect.width) * 100;
+            const percentY = (relativeY / imageRect.height) * 100;
+            
+            console.log('Clic sur image:', {
+                clientX, clientY,
+                imageRect: imageRect,
+                relativeX, relativeY,
+                percentX, percentY
+            });
+            
+            return { x: percentX, y: percentY };
+        }
+
+        function positionZoneMarker(marker, percentX, percentY) {
+            const planImage = document.getElementById('planImage');
+            if (!planImage) return;
+            
+            const imageRect = planImage.getBoundingClientRect();
+            const wrapperRect = document.getElementById('imageWrapper').getBoundingClientRect();
+            
+            // Calculer la position en pixels par rapport à l'image
+            const pixelX = (percentX / 100) * imageRect.width;
+            const pixelY = (percentY / 100) * imageRect.height;
+            
+            // Position relative au wrapper
+            const relativeX = pixelX + (imageRect.left - wrapperRect.left);
+            const relativeY = pixelY + (imageRect.top - wrapperRect.top);
+            
+            marker.style.left = relativeX + 'px';
+            marker.style.top = relativeY + 'px';
+        }
+
+        function updateAllZonePositions() {
+            if (!dispositionData || !dispositionData.zones) return;
+            
+            dispositionData.zones.forEach(zone => {
+                const marker = document.querySelector(`[data-zone-id="${zone.id}"]`);
+                if (marker && zone.x !== undefined && zone.y !== undefined) {
+                    positionZoneMarker(marker, zone.x, zone.y);
+                }
+            });
+        }
+
+        async function loadData() {
+            try {
+                const panneauxResponse = await fetch('/api/panneaux');
+                panneauxData = await panneauxResponse.json();
+                
+                const statsResponse = await fetch('/api/statistics');
+                const statsData = await statsResponse.json();
+                
+                const dispositionResponse = await fetch('/api/disposition');
+                dispositionData = await dispositionResponse.json();
+                
+                updateUI(statsData);
+                loadZones();
+                
+            } catch (error) {
+                console.error('Erreur lors du chargement:', error);
+                document.getElementById('globalStats').innerHTML = '<div class="error">Erreur de chargement</div>';
+            }
+        }
+
+        function updateUI(statsData) {
+            const globalStats = document.getElementById('globalStats');
+            if (statsData.resume) {
+                globalStats.innerHTML = `
+                    <div class="stat-item">
+                        <span>Total panneaux:</span>
+                        <span class="stat-value">${statsData.resume.total_panneaux}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>Positions totales:</span>
+                        <span class="stat-value">${statsData.resume.total_positions}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>Positions utilisées:</span>
+                        <span class="stat-value">${statsData.resume.positions_utilisees}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>Taux d'utilisation:</span>
+                        <span class="stat-value">${statsData.resume.taux_utilisation}</span>
+                    </div>
+                `;
+            }
+        }
+
+        function loadZones() {
+            const zonesList = document.getElementById('zonesList');
+            
+            // Nettoyer les marqueurs existants
+            const existingMarkers = document.querySelectorAll('.zone-marker');
+            existingMarkers.forEach(marker => marker.remove());
+            
+            if (!dispositionData || !dispositionData.zones || dispositionData.zones.length === 0) {
+                zonesList.innerHTML = '<div style="text-align: center; color: #7f8c8d; padding: 20px;">Aucune zone configurée</div>';
+                return;
+            }
+
+            zonesList.innerHTML = '';
+            dispositionData.zones.forEach(zone => {
+                const zoneElement = document.createElement('div');
+                zoneElement.className = 'zone-item';
+                zoneElement.onclick = () => selectZone(zone);
+                
+                zoneElement.innerHTML = `
+                    <div class="zone-name">${zone.nom}</div>
+                    <div class="zone-info">${zone.type} - ${getZonePositionsInfo(zone)}</div>
+                    <div class="zone-actions">
+                        <button class="btn btn-small" onclick="editZoneById(${zone.id}); event.stopPropagation();">✏️ Modifier</button>
+                        <button class="btn btn-small danger" onclick="deleteZoneById(${zone.id}); event.stopPropagation();">🗑️ Supprimer</button>
+                    </div>
+                `;
+                
+                zonesList.appendChild(zoneElement);
+                
+                // Ajouter le marqueur sur le plan
+                addZoneMarker(zone);
+            });
+        }
+
+        function addZoneMarker(zone) {
+            const marker = document.createElement('div');
+            marker.className = 'zone-marker';
+            marker.title = zone.nom;
+            marker.dataset.zoneId = zone.id;
+            
+            // Vérifier si c'est un matériel tiers
+            if (zone.materiel) {
+                marker.classList.add('materiel-tiers');
+                marker.innerHTML = getMaterielEmoji(zone.materiel.type);
+                marker.style.background = 'transparent';
+                marker.style.border = 'none';
+                marker.style.fontSize = '28px';
+                marker.style.filter = 'drop-shadow(2px 2px 4px rgba(0,0,0,0.4))';
+                
+                // Tooltip enrichi
+                let tooltipText = `${zone.nom}\nType: ${zone.materiel.type}`;
+                if (zone.materiel.marque) tooltipText += `\nModèle: ${zone.materiel.marque}`;
+                if (zone.materiel.ip) tooltipText += `\nIP: ${zone.materiel.ip}`;
+                if (zone.materiel.mac) tooltipText += `\nMAC: ${zone.materiel.mac}`;
+                marker.title = tooltipText;
+            }
+            
+            // Clic gauche
+            marker.onclick = (e) => {
+                if (isDraggingMode) return;
+                e.stopPropagation();
+                selectZone(zone);
+                if (!zone.materiel) {
+                    showBaieView(zone);
+                } else {
+                    // Afficher les infos du matériel
+                    showMaterielInfo(zone);
+                }
+            };
+            
+            // Clic droit pour menu contextuel
+            marker.oncontextmenu = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                rightClickedZone = zone;
+                showContextMenu(e.clientX, e.clientY);
+            };
+            
+            // Setup drag handlers
+            setupDragHandlers(marker, zone);
+            
+            // Ajouter au wrapper d'image
+            document.getElementById('imageWrapper').appendChild(marker);
+            
+            // Positionner le marker
+            if (zone.x !== undefined && zone.y !== undefined) {
+                positionZoneMarker(marker, zone.x, zone.y);
+            }
+        }
+
+        function showMaterielInfo(zone) {
+            let info = `📍 ${zone.nom}\n`;
+            info += `\nType: ${zone.type}`;
+            info += `\nMatériel: ${zone.materiel.type}`;
+            if (zone.materiel.marque) info += `\nModèle: ${zone.materiel.marque}`;
+            if (zone.materiel.ip) info += `\nAdresse IP: ${zone.materiel.ip}`;
+            if (zone.materiel.mac) info += `\nAdresse MAC: ${zone.materiel.mac}`;
+            if (zone.materiel.notes) info += `\nNotes: ${zone.materiel.notes}`;
+            
+            alert(info);
+        }
+        
+        function selectZone(zone) {
+            // Désélectionner la zone précédente
+            document.querySelectorAll('.zone-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            document.querySelectorAll('.zone-marker').forEach(marker => {
+                marker.classList.remove('selected');
+            });
+
+            // Sélectionner la nouvelle zone
+            selectedZone = zone;
+            
+            // Trouver et sélectionner l'élément correspondant
+            const zoneItems = document.querySelectorAll('.zone-item');
+            zoneItems.forEach((item, index) => {
+                if (dispositionData.zones[index]?.id === zone.id) {
+                    item.classList.add('selected');
+                }
+            });
+
+            // Sélectionner le marqueur correspondant
+            const marker = document.querySelector(`[data-zone-id="${zone.id}"]`);
+            if (marker) {
+                marker.classList.add('selected');
+            }
+        }
+
+        function addZoneMode() {
+            isAddingZone = true;
+            document.getElementById('planContainer').style.cursor = 'crosshair';
+            document.querySelector('button[onclick="addZoneMode()"]').textContent = '❌ Annuler';
+            document.querySelector('button[onclick="addZoneMode()"]').onclick = cancelAddZone;
+        }
+
+        function cancelAddZone() {
+            isAddingZone = false;
+            document.getElementById('planContainer').style.cursor = 'default';
+            document.querySelector('button[onclick="cancelAddZone()"]').textContent = '➕ Ajouter Zone';
+            document.querySelector('button[onclick="cancelAddZone()"]').onclick = addZoneMode;
+        }
+
+function getZonePositionsInfo(zone) {
+    if (zone.materiel) {
+        // C'est un matériel tiers
+        let info = zone.materiel.type;
+        if (zone.materiel.ip) info += ` (${zone.materiel.ip})`;
+        return info;
+    } else if (zone.panneaux && Array.isArray(zone.panneaux)) {
+        const totalPositions = zone.panneaux.reduce((total, p) => total + p.positions.length, 0);
+        const panneauxCount = zone.panneaux.length;
+        return `${panneauxCount} panneau(x) - ${totalPositions} position(s)`;
+    } else if (zone.panneau) {
+        return `Panneau ${zone.panneau.id} (${zone.panneau.positions.length} position(s))`;
+    }
+    return 'Aucune position';
+}
+
+        function ajouterPanneau() {
+            panneauCounter++;
+            const panneauxContainer = document.getElementById('panneauxMultiples');
+            
+            const panneauDiv = document.createElement('div');
+            panneauDiv.className = 'panneau-item';
+            panneauDiv.id = `panneau-item-${panneauCounter}`;
+            
+            panneauDiv.innerHTML = `
+                <div class="panneau-header">
+                    <select class="panneau-select" onchange="loadPositionsForPanneau(${panneauCounter})">
+                        <option value="">-- Sélectionner un panneau --</option>
+                        ${generatePanneauxOptions()}
+                    </select>
+                    <button type="button" class="btn-remove-panneau" onclick="supprimerPanneau(${panneauCounter})">🗑️</button>
+                </div>
+                <div class="panneau-stats" id="panneau-stats-${panneauCounter}"></div>
+                <div class="panneau-positions" id="panneau-positions-${panneauCounter}">
+                    <div class="positions-selector" id="positions-grid-${panneauCounter}"></div>
+                    <small style="color: #7f8c8d;">
+                        <span style="display: inline-block; width: 12px; height: 12px; background: #27ae60; margin: 0 4px;"></span>Libre
+                        <span style="display: inline-block; width: 12px; height: 12px; background: #e74c3c; margin: 0 4px;"></span>Utilisée (câblée)
+                        <span style="display: inline-block; width: 12px; height: 12px; background: #f39c12; margin: 0 4px;"></span>Spéciale
+                        <span style="display: inline-block; width: 12px; height: 12px; background: #9b59b6; margin: 0 4px;"></span>Déjà assignée
+                        <span style="display: inline-block; width: 12px; height: 12px; background: #3498db; margin: 0 4px;"></span>Sélectionnée
+                    </small>
+                </div>
+            `;
+            
+            panneauxContainer.appendChild(panneauDiv);
+        }
+
+        function generatePanneauxOptions() {
+            if (!panneauxData || !panneauxData.panneaux) return '';
+            
+            return panneauxData.panneaux.map(panneau => 
+                `<option value="${panneau.id}">${panneau.nom} (${panneau.statistiques.utilise}/${panneau.statistiques.total})</option>`
+            ).join('');
+        }
+
+        function supprimerPanneau(panneauId) {
+            const panneauDiv = document.getElementById(`panneau-item-${panneauId}`);
+            if (panneauDiv) {
+                const select = panneauDiv.querySelector('.panneau-select');
+                if (select && select.value) {
+                    delete selectedPositions[parseInt(select.value)];
+                    updateSelectionCounter();
+                }
+                panneauDiv.remove();
+            }
+        }
+
+        function loadPositionsForPanneau(panneauItemId) {
+            const panneauDiv = document.getElementById(`panneau-item-${panneauItemId}`);
+            const select = panneauDiv.querySelector('.panneau-select');
+            const panneauId = parseInt(select.value);
+            
+            const statsDiv = document.getElementById(`panneau-stats-${panneauItemId}`);
+            const positionsDiv = document.getElementById(`panneau-positions-${panneauItemId}`);
+            const positionsGrid = document.getElementById(`positions-grid-${panneauItemId}`);
+            
+            if (selectedPositions[panneauId]) {
+                delete selectedPositions[panneauId];
+            }
+            
+            if (!panneauId) {
+                positionsDiv.style.display = 'none';
+                statsDiv.innerHTML = '';
+                return;
+            }
+            
+            const panneau = panneauxData.panneaux.find(p => p.id === panneauId);
+            if (!panneau) return;
+            
+            statsDiv.innerHTML = `📊 ${panneau.statistiques.utilise} utilisées / ${panneau.statistiques.total} total (${panneau.statistiques.taux_utilisation})`;
+            
+            positionsDiv.style.display = 'block';
+            positionsGrid.innerHTML = '';
+            
+            selectedPositions[panneauId] = [];
+            updateSelectionCounter();
+            
+            const positionsUtiliseesParZones = getPositionsUtiliseesParZones(panneauId);
+            
+            panneau.positions_totales.forEach(pos => {
+                const positionElement = document.createElement('div');
+                positionElement.className = 'position-item';
+                positionElement.dataset.position = pos;
+                positionElement.dataset.panneau = panneauId;
+                
+                const isUsed = panneau.positions_utilisees.includes(pos);
+                const isSpecial = panneau.marqueurs_speciaux[pos];
+                const isUtiliseeParZone = positionsUtiliseesParZones.includes(pos);
+                
+                let tooltipText = `Position ${pos}<br>`;
+                let canSelect = true;
+                
+                if (isSpecial) {
+                    positionElement.classList.add('special');
+                    tooltipText += isSpecial;
+                } else if (isUsed) {
+                    positionElement.classList.add('utilisee');
+                    tooltipText += 'Utilisée (câblée)';
+                } else {
+                    positionElement.classList.add('libre');
+                    tooltipText += 'Libre';
+                }
+                
+                if (isUtiliseeParZone) {
+                    const zoneUtilisatrice = getZoneUtilisatricePosition(panneauId, pos);
+                    if (!isEditMode || (isEditMode && zoneUtilisatrice.id !== editingZoneId)) {
+                        positionElement.classList.add('zone-utilisee');
+                        tooltipText += `<br>⚠️ Déjà assignée à "${zoneUtilisatrice.nom}"`;
+                        canSelect = false;
+                    }
+                }
+                
+                positionElement.innerHTML = `
+                    <span>${pos}</span>
+                    <div class="position-tooltip">
+                        ${tooltipText}
+                    </div>
+                `;
+                
+                if (canSelect) {
+                    positionElement.onclick = () => togglePositionMulti(panneauId, pos, positionElement);
+                } else {
+                    positionElement.style.cursor = 'not-allowed';
+                    positionElement.style.opacity = '0.5';
+                }
+                
+                positionsGrid.appendChild(positionElement);
+            });
+        }
+
+        function togglePositionMulti(panneauId, position, element) {
+            if (!selectedPositions[panneauId]) {
+                selectedPositions[panneauId] = [];
+            }
+            
+            const index = selectedPositions[panneauId].indexOf(position);
+            
+            if (index > -1) {
+                selectedPositions[panneauId].splice(index, 1);
+                element.classList.remove('selected');
+            } else {
+                selectedPositions[panneauId].push(position);
+                element.classList.add('selected');
+            }
+            
+            updateSelectionCounter();
+        }
+
+        function updateSelectionCounter() {
+            const totalSelected = Object.values(selectedPositions).reduce((total, positions) => total + positions.length, 0);
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const baseText = isEditMode ? 'Mettre à Jour' : 'Créer Zone';
+            
+            if (totalSelected > 0) {
+                submitBtn.textContent = `${baseText} (${totalSelected} position${totalSelected > 1 ? 's' : ''})`;
+                submitBtn.disabled = false;
+            } else {
+                submitBtn.textContent = baseText;
+                submitBtn.disabled = true;
+            }
+        }
+
+        function showBaieView(zone) {
+            if (zone.panneaux && Array.isArray(zone.panneaux)) {
+                const params = new URLSearchParams();
+                params.set('zone', zone.id);
+                params.set('multi', '1');
+                zone.panneaux.forEach((p, index) => {
+                    params.set(`panneau${index}`, p.id);
+                    params.set(`positions${index}`, p.positions.join(','));
+                });
+                const url = `/baie?${params.toString()}`;
+                window.open(url, '_blank');
+            } else if (zone.panneau) {
+                const url = `/baie?zone=${zone.id}&panneau=${zone.panneau.id}&positions=${zone.panneau.positions.join(',')}`;
+                window.open(url, '_blank');
+            }
+        }
+
+        function getPositionsUtiliseesParZones(panneauId) {
+            const positions = [];
+            if (dispositionData && dispositionData.zones) {
+                dispositionData.zones.forEach(zone => {
+                    if (zone.panneaux && Array.isArray(zone.panneaux)) {
+                        zone.panneaux.forEach(p => {
+                            if (p.id === panneauId) {
+                                positions.push(...p.positions);
+                            }
+                        });
+                    } else if (zone.panneau && zone.panneau.id === panneauId) {
+                        positions.push(...zone.panneau.positions);
+                    }
+                });
+            }
+            return positions;
+        }
+
+        function getZoneUtilisatricePosition(panneauId, position) {
+            if (dispositionData && dispositionData.zones) {
+                return dispositionData.zones.find(zone => {
+                    if (zone.panneaux && Array.isArray(zone.panneaux)) {
+                        return zone.panneaux.some(p => 
+                            p.id === panneauId && p.positions.includes(position)
+                        );
+                    } else if (zone.panneau) {
+                        return zone.panneau.id === panneauId && 
+                               zone.panneau.positions.includes(position);
+                    }
+                    return false;
+                });
+            }
+            return null;
+        }
+
+        // Fonctions pour le menu contextuel et l'édition
+        function showContextMenu(x, y) {
+            const contextMenu = document.getElementById('contextMenu');
+            contextMenu.style.display = 'block';
+            contextMenu.style.left = x + 'px';
+            contextMenu.style.top = y + 'px';
+        }
+
+        function hideContextMenu() {
+            document.getElementById('contextMenu').style.display = 'none';
+        }
+
+        function editZone() {
+            hideContextMenu();
+            if (rightClickedZone) {
+                openEditModal(rightClickedZone);
+            }
+        }
+
+        function editZoneById(zoneId) {
+            const zone = dispositionData.zones.find(z => z.id === zoneId);
+            if (zone) {
+                openEditModal(zone);
+            }
+        }
+
+        function openEditModal(zone) {
+            isEditMode = true;
+            editingZoneId = zone.id;
+            
+            document.getElementById('modalTitle').textContent = 'Modifier la Zone';
+            document.getElementById('submitBtn').textContent = 'Mettre à Jour';
+            document.getElementById('modalContent').classList.add('edit-mode');
+            
+            document.getElementById('zoneName').value = zone.nom;
+            document.getElementById('zoneType').value = zone.type;
+            
+            document.getElementById('panneauxMultiples').innerHTML = '';
+            selectedPositions = {};
+            panneauCounter = 0;
+            
+            if (zone.panneaux && Array.isArray(zone.panneaux)) {
+                zone.panneaux.forEach((zonePanneau, index) => {
+                    ajouterPanneau();
+                    const currentPanneauDiv = document.getElementById(`panneau-item-${panneauCounter}`);
+                    const select = currentPanneauDiv.querySelector('.panneau-select');
+                    select.value = zonePanneau.id;
+                    
+                    loadPositionsForPanneau(panneauCounter);
+                    
+                    setTimeout(() => {
+                        zonePanneau.positions.forEach(pos => {
+                            const element = currentPanneauDiv.querySelector(`[data-position="${pos}"][data-panneau="${zonePanneau.id}"]`);
+                            if (element && !element.classList.contains('zone-utilisee')) {
+                                togglePositionMulti(zonePanneau.id, pos, element);
+                            }
+                        });
+                    }, 200 + (index * 100));
+                });
+            } else if (zone.panneau) {
+                ajouterPanneau();
+                const currentPanneauDiv = document.getElementById(`panneau-item-${panneauCounter}`);
+                const select = currentPanneauDiv.querySelector('.panneau-select');
+                select.value = zone.panneau.id;
+                
+                loadPositionsForPanneau(panneauCounter);
+                
+                setTimeout(() => {
+                    zone.panneau.positions.forEach(pos => {
+                        const element = currentPanneauDiv.querySelector(`[data-position="${pos}"][data-panneau="${zone.panneau.id}"]`);
+                        if (element && !element.classList.contains('zone-utilisee')) {
+                            togglePositionMulti(zone.panneau.id, pos, element);
+                        }
+                    });
+                }, 200);
+            }
+            
+            const marker = document.querySelector(`[data-zone-id="${zone.id}"]`);
+            if (marker) {
+                marker.classList.add('editing');
+            }
+            
+            currentClickPosition = { x: zone.x, y: zone.y };
+            
+            document.getElementById('zoneModal').style.display = 'block';
+        }
+
+        function duplicateZone() {
+            hideContextMenu();
+            if (rightClickedZone) {
+                isEditMode = false;
+                editingZoneId = null;
+                
+                document.getElementById('modalTitle').textContent = 'Dupliquer la Zone';
+                document.getElementById('submitBtn').textContent = 'Créer Zone';
+                
+                document.getElementById('zoneName').value = rightClickedZone.nom + ' (Copie)';
+                document.getElementById('zoneType').value = rightClickedZone.type;
+                
+                document.getElementById('panneauxMultiples').innerHTML = '';
+                selectedPositions = {};
+                panneauCounter = 0;
+                
+                if (rightClickedZone.panneaux && Array.isArray(rightClickedZone.panneaux)) {
+                    rightClickedZone.panneaux.forEach(zonePanneau => {
+                        ajouterPanneau();
+                        const currentPanneauDiv = document.getElementById(`panneau-item-${panneauCounter}`);
+                        const select = currentPanneauDiv.querySelector('.panneau-select');
+                        select.value = zonePanneau.id;
+                        
+                        loadPositionsForPanneau(panneauCounter);
+                        
+                        setTimeout(() => {
+                            zonePanneau.positions.forEach(pos => {
+                                const element = currentPanneauDiv.querySelector(`[data-position="${pos}"][data-panneau="${zonePanneau.id}"]`);
+                                if (element) {
+                                    togglePositionMulti(zonePanneau.id, pos, element);
+                                }
+                            });
+                        }, 100);
+                    });
+                } else if (rightClickedZone.panneau) {
+                    ajouterPanneau();
+                    const currentPanneauDiv = document.getElementById(`panneau-item-${panneauCounter}`);
+                    const select = currentPanneauDiv.querySelector('.panneau-select');
+                    select.value = rightClickedZone.panneau.id;
+                    
+                    loadPositionsForPanneau(panneauCounter);
+                    
+                    setTimeout(() => {
+                        rightClickedZone.panneau.positions.forEach(pos => {
+                            const element = currentPanneauDiv.querySelector(`[data-position="${pos}"][data-panneau="${rightClickedZone.panneau.id}"]`);
+                            if (element) {
+                                togglePositionMulti(rightClickedZone.panneau.id, pos, element);
+                            }
+                        });
+                    }, 100);
+                }
+                
+                currentClickPosition = { 
+                    x: rightClickedZone.x + 2, 
+                    y: rightClickedZone.y + 2 
+                };
+                
+                document.getElementById('zoneModal').style.display = 'block';
+            }
+        }
+
+        function deleteZone() {
+            hideContextMenu();
+            if (rightClickedZone) {
+                deleteZoneById(rightClickedZone.id);
+            }
+        }
+
+        async function deleteZoneById(zoneId) {
+            if (confirm('Êtes-vous sûr de vouloir supprimer cette zone ?')) {
+                try {
+                    const response = await fetch(`/api/disposition/${zoneId}`, {
+                        method: 'DELETE'
+                    });
+
+                    if (response.ok) {
+                        loadData();
+                    } else {
+                        const errorData = await response.json();
+                        console.error('Erreur suppression:', errorData);
+                        alert(`Erreur lors de la suppression: ${errorData.error || 'Erreur inconnue'}`);
+                    }
+                } catch (error) {
+                    console.error('Erreur:', error);
+                    alert(`Erreur lors de la suppression: ${error.message}`);
+                }
+            }
+        }
+
+        // Gestionnaire de clic sur l'image (corrigé)
+        document.getElementById('planImage').addEventListener('click', function(e) {
+            if (!isAddingZone) return;
+
+            e.stopPropagation();
+            
+            const coordinates = getImageCoordinates(e.clientX, e.clientY);
+            if (!coordinates) {
+                console.log('Clic en dehors de l\'image');
+                return;
+            }
+            
+            currentClickPosition = coordinates;
+            
+            document.getElementById('panneauxMultiples').innerHTML = '';
+            selectedPositions = {};
+            panneauCounter = 0;
+            ajouterPanneau();
+            
+            document.getElementById('zoneModal').style.display = 'block';
+        });
+
+        // Gestionnaire du formulaire de zone
+        document.getElementById('zoneForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const materielType = document.getElementById('materielType').value;
+            
+            let formData = {
+                nom: document.getElementById('zoneName').value,
+                type: document.getElementById('zoneType').value,
+                x: currentClickPosition.x,
+                y: currentClickPosition.y
+            };
+            
+            if (materielType) {
+                // C'est un matériel tiers
+                formData.materiel = {
+                    type: materielType,
+                    marque: document.getElementById('materielMarque').value || null,
+                    ip: document.getElementById('materielIP').value || null,
+                    mac: document.getElementById('materielMAC').value || null,
+                    notes: document.getElementById('materielNotes').value || null
+                };
+            } else {
+                // C'est une prise réseau standard avec panneaux
+                const panneauxAvecPositions = [];
+                Object.keys(selectedPositions).forEach(panneauId => {
+                    if (selectedPositions[panneauId].length > 0) {
+                        panneauxAvecPositions.push({
+                            id: parseInt(panneauId),
+                            positions: selectedPositions[panneauId]
+                        });
+                    }
+                });
+                
+                if (panneauxAvecPositions.length === 0) {
+                    alert('Veuillez sélectionner au moins une position sur un panneau ou choisir un matériel tiers');
+                    return;
+                }
+                
+                formData.panneaux = panneauxAvecPositions;
+            }
+
+            try {
+                let response;
+                
+                if (isEditMode && editingZoneId) {
+                    response = await fetch(`/api/disposition/${editingZoneId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(formData)
+                    });
+                } else {
+                    response = await fetch('/api/disposition', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(formData)
+                    });
+                }
+
+                if (response.ok) {
+                    closeModal();
+                    cancelAddZone();
+                    loadData();
+                } else {
+                    const errorData = await response.json();
+                    console.error('Erreur serveur:', errorData);
+                    alert(`Erreur lors de la sauvegarde: ${errorData.error || 'Erreur inconnue'}`);
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                // ici il me dit erreur alors que il y'a pas d'erreuril enrgisitre correctement il me dit : Cannot set properties of null (setting 'textContent')
+                //alert(`Erreur lors de la sauvegarde: ${error.message}`);
+                
+            }
+        });
+        function closeModal() {
+            document.getElementById('zoneModal').style.display = 'none';
+            document.getElementById('zoneForm').reset();
+            document.getElementById('panneauxMultiples').innerHTML = '';
+            document.getElementById('panneauxSection').style.display = 'block';
+            document.getElementById('materielSection').style.display = 'none';
+            selectedPositions = {};
+            panneauCounter = 0;
+            
+            isEditMode = false;
+            editingZoneId = null;
+            document.getElementById('modalTitle').textContent = 'Nouvelle Zone de Prises';
+            document.getElementById('submitBtn').textContent = 'Créer Zone';
+            document.getElementById('submitBtn').disabled = false;
+            document.getElementById('modalContent').classList.remove('edit-mode');
+            
+            document.querySelectorAll('.zone-marker.editing').forEach(marker => {
+                marker.classList.remove('editing');
+            });
+        }
+        function handleMaterielChange() {
+    const materielType = document.getElementById('materielType').value;
+    const panneauxSection = document.getElementById('panneauxSection');
+    const materielSection = document.getElementById('materielSection');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    if (materielType) {
+        // Matériel tiers sélectionné : cacher les panneaux, afficher les infos matériel
+        panneauxSection.style.display = 'none';
+        materielSection.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.textContent = isEditMode ? 'Mettre à Jour' : 'Créer Zone';
+    } else {
+        // Prise réseau standard : afficher les panneaux, cacher les infos matériel
+        panneauxSection.style.display = 'block';
+        materielSection.style.display = 'none';
+        updateSelectionCounter();
+    }
+}
+
+function handleTypeChange() {
+    // Vous pouvez ajouter une logique ici si nécessaire
+}
+
+function getMaterielEmoji(materielType) {
+    const emojis = {
+        'imprimante': '🖨️',
+        'borne_wifi': '📡',
+        'camera': '📹',
+        'telephone': '☎️',
+        'serveur': '🖥️',
+        'switch': '🔀',
+        'autre_materiel': '⚙️'
+    };
+    return emojis[materielType] || '📍';
+}
+
+function getMaterielColor(materielType) {
+    const colors = {
+        'imprimante': '#e67e22',
+        'borne_wifi': '#1abc9c',
+        'camera': '#9b59b6',
+        'telephone': '#3498db',
+        'serveur': '#e74c3c',
+        'switch': '#f39c12',
+        'autre_materiel': '#95a5a6'
+    };
+    return colors[materielType] || '#34495e';
+}
+        // Fermer la modal et le menu contextuel
+        window.addEventListener('click', function(e) {
+            const modal = document.getElementById('zoneModal');
+            if (e.target === modal) {
+                closeModal();
+            }
+            
+            hideContextMenu();
+        });
+
+        // Raccourcis clavier
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.shiftKey && e.key === 'L') {
+                e.preventDefault();
+                logout();
+            }
+        });
+    </script>
+</body>
+</html>

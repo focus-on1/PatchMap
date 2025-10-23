@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administration des Panneaux - DCIM</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .panneaux-list {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .panneau-item {
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+        }
+
+        .panneau-item:hover {
+            border-color: #667eea;
+            box-shadow: 0 2px 8px rgba(102,126,234,0.2);
+        }
+
+        .panneau-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .panneau-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .panneau-type {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .type-standard {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .type-named {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .panneau-stats {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .positions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+            gap: 5px;
+            margin: 15px 0;
+        }
+
+        .position-box {
+            aspect-ratio: 1;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .position-used {
+            background: #28a745;
+            color: white;
+            border-color: #28a745;
+        }
+
+        .position-free {
+            background: #f8f9fa;
+            color: #666;
+            border-color: #dee2e6;
+        }
+
+        .position-box:hover {
+            transform: scale(1.1);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            max-width: 800px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .positions-selector {
+            margin: 20px 0;
+        }
+
+        .positions-selector h4 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .marqueurs-section {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+
+        .marqueur-item {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
+        .marqueur-item input {
+            flex: 1;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .alert {
+            padding: 12px 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .alert.show {
+            display: block;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>⚙️ Administration des Panneaux</h1>
+            <div class="nav-links">
+                <a href="/" class="btn btn-secondary">← Retour au Plan</a>
+                <a href="/baie" class="btn btn-secondary">Vue Baie</a>
+                <button class="btn btn-primary" onclick="openCreateModal()">➕ Nouveau Panneau</button>
+            </div>
+        </div>
+
+        <!-- Alert -->
+        <div id="alert" class="alert"></div>
+
+        <!-- Stats globales -->
+        <div class="stats-container" id="statsContainer">
+            <!-- Chargé dynamiquement -->
+        </div>
+
+        <!-- Liste des panneaux -->
+        <div class="panneaux-list">
+            <h2 style="margin-bottom: 20px;">Liste des Panneaux</h2>
+            <div id="panneauxList">
+                <!-- Chargé dynamiquement -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Créer/Éditer -->
+    <div id="panneauModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Nouveau Panneau</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+
+            <form id="panneauForm" onsubmit="savePanneau(event)">
+                <div class="form-group">
+                    <label>Nom du Panneau *</label>
+                    <input type="text" id="panneauNom" required placeholder="Ex: Bandeau 1">
+                </div>
+
+                <div class="form-group">
+                    <label>Type *</label>
+                    <select id="panneauType" required>
+                        <option value="standard">Standard</option>
+                        <option value="named">Nommé (avec suffixe)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Nombre de ports *</label>
+                    <input type="number" id="nombrePorts" min="1" max="48" value="16" required onchange="generatePositions()">
+                </div>
+
+                <div class="form-group">
+                    <label>Numérotation commence à</label>
+                    <input type="number" id="startNumber" min="1" value="1" onchange="generatePositions()">
+                </div>
+
+                <div class="positions-selector">
+                    <h4>Sélection des positions utilisées</h4>
+                    <div class="quick-actions">
+                        <button type="button" class="btn btn-success" onclick="selectAllPositions()">Tout sélectionner</button>
+                        <button type="button" class="btn btn-warning" onclick="clearAllPositions()">Tout désélectionner</button>
+                    </div>
+                    <div id="positionsGrid" class="positions-grid">
+                        <!-- Généré dynamiquement -->
+                    </div>
+                </div>
+
+                <div class="marqueurs-section">
+                    <h4>Marqueurs spéciaux (optionnel)</h4>
+                    <div id="marqueursContainer">
+                        <button type="button" class="btn btn-primary" onclick="addMarqueur()">+ Ajouter un marqueur</button>
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button type="submit" class="btn btn-success">💾 Enregistrer</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Annuler</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let currentPanneauId = null;
+        let panneauxData = null;
+
+        // Charger les données au démarrage
+        document.addEventListener('DOMContentLoaded', () => {
+            loadPanneaux();
+        });
+
+        async function loadPanneaux() {
+            try {
+                const response = await fetch('/api/panneaux');
+                panneauxData = await response.json();
+                
+                displayStats();
+                displayPanneaux();
+            } catch (error) {
+                showAlert('Erreur lors du chargement des panneaux', 'error');
+            }
+        }
+
+        function displayStats() {
+            const stats = panneauxData.metadata;
+            const container = document.getElementById('statsContainer');
+            
+            container.innerHTML = `
+                <div class="stat-card">
+                    <h3>Total Panneaux</h3>
+                    <div class="value">${stats.total_panneaux}</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Total Positions</h3>
+                    <div class="value">${stats.total_positions}</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Positions Utilisées</h3>
+                    <div class="value" style="color: #28a745;">${stats.positions_utilisees}</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Positions Libres</h3>
+                    <div class="value" style="color: #dc3545;">${stats.positions_libres}</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Taux d'utilisation</h3>
+                    <div class="value" style="color: #667eea;">${stats.taux_utilisation}</div>
+                </div>
+            `;
+        }
+
+        function displayPanneaux() {
+            const container = document.getElementById('panneauxList');
+            
+            if (!panneauxData.panneaux || panneauxData.panneaux.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #666;">Aucun panneau configuré</p>';
+                return;
+            }
+
+            container.innerHTML = panneauxData.panneaux.map(panneau => `
+                <div class="panneau-item">
+                    <div class="panneau-header">
+                        <div>
+                            <span class="panneau-title">${panneau.nom}</span>
+                            <span class="panneau-type type-${panneau.type}">${panneau.type}</span>
+                        </div>
+                        <div class="actions">
+                            <button class="btn btn-warning" onclick="editPanneau(${panneau.id})">✏️ Éditer</button>
+                            <button class="btn btn-danger" onclick="deletePanneau(${panneau.id})">🗑️ Supprimer</button>
+                        </div>
+                    </div>
+
+                    <div class="panneau-stats">
+                        <div class="stat-item">
+                            <strong>Total:</strong> ${panneau.statistiques.total}
+                        </div>
+                        <div class="stat-item">
+                            <strong>Utilisé:</strong> <span style="color: #28a745;">${panneau.statistiques.utilise}</span>
+                        </div>
+                        <div class="stat-item">
+                            <strong>Libre:</strong> <span style="color: #dc3545;">${panneau.statistiques.libre}</span>
+                        </div>
+                        <div class="stat-item">
+                            <strong>Taux:</strong> <span style="color: #667eea;">${panneau.statistiques.taux_utilisation}</span>
+                        </div>
+                    </div>
+
+                    ${Object.keys(panneau.marqueurs_speciaux).length > 0 ? `
+                        <div style="margin-bottom: 10px;">
+                            <strong>Marqueurs:</strong> ${Object.entries(panneau.marqueurs_speciaux).map(([pos, label]) => 
+                                `<span style="background: #e3f2fd; padding: 2px 8px; border-radius: 3px; margin-right: 5px;">#${pos}: ${label}</span>`
+                            ).join('')}
+                        </div>
+                    ` : ''}
+
+                    <div class="positions-grid">
+                        ${panneau.positions_totales.map(pos => `
+                            <div class="position-box ${panneau.positions_utilisees.includes(pos) ? 'position-used' : 'position-free'}">
+                                ${pos}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openCreateModal() {
+            currentPanneauId = null;
+            document.getElementById('modalTitle').textContent = 'Nouveau Panneau';
+            document.getElementById('panneauForm').reset();
+            generatePositions();
+            document.getElementById('panneauModal').classList.add('active');
+        }
+
+        function editPanneau(id) {
+            currentPanneauId = id;
+            const panneau = panneauxData.panneaux.find(p => p.id === id);
+            
+            document.getElementById('modalTitle').textContent = 'Éditer le Panneau';
+            document.getElementById('panneauNom').value = panneau.nom;
+            document.getElementById('panneauType').value = panneau.type;
+            document.getElementById('nombrePorts').value = panneau.positions_totales.length;
+            document.getElementById('startNumber').value = panneau.positions_totales[0];
+            
+            generatePositions();
+            
+            // Marquer les positions utilisées ET mettre à jour visuellement
+            panneau.positions_utilisees.forEach(pos => {
+                const checkbox = document.getElementById(`pos_${pos}`);
+                if (checkbox) {
+                    checkbox.checked = true;
+                    updatePositionBox(pos); // ✅ CORRECTION: Appeler cette fonction
+                }
+            });
+            
+            // Charger les marqueurs
+            const marqueursContainer = document.getElementById('marqueursContainer');
+            marqueursContainer.innerHTML = '<button type="button" class="btn btn-primary" onclick="addMarqueur()">+ Ajouter un marqueur</button>';
+            
+            Object.entries(panneau.marqueurs_speciaux).forEach(([pos, label]) => {
+                addMarqueur(pos, label);
+            });
+            
+            document.getElementById('panneauModal').classList.add('active');
+        }
+
+        function generatePositions() {
+            const nombrePorts = parseInt(document.getElementById('nombrePorts').value);
+            const startNumber = parseInt(document.getElementById('startNumber').value);
+            const grid = document.getElementById('positionsGrid');
+            
+            grid.innerHTML = '';
+            
+            for (let i = 0; i < nombrePorts; i++) {
+                const position = startNumber + i;
+                const box = document.createElement('div');
+                box.className = 'position-box';
+                box.innerHTML = `
+                    <input type="checkbox" id="pos_${position}" value="${position}" 
+                           style="display: none;" onchange="updatePositionBox(${position})">
+                    <label for="pos_${position}" style="cursor: pointer; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
+                        ${position}
+                    </label>
+                `;
+                grid.appendChild(box);
+            }
+        }
+
+        function updatePositionBox(position) {
+            const checkbox = document.getElementById(`pos_${position}`);
+            const box = checkbox.parentElement;
+            
+            if (checkbox.checked) {
+                box.classList.add('position-used');
+                box.classList.remove('position-free');
+            } else {
+                box.classList.add('position-free');
+                box.classList.remove('position-used');
+            }
+        }
+
+        function selectAllPositions() {
+            const checkboxes = document.querySelectorAll('#positionsGrid input[type="checkbox"]');
+            checkboxes.forEach(cb => {
+                cb.checked = true;
+                updatePositionBox(parseInt(cb.value));
+            });
+        }
+
+        function clearAllPositions() {
+            const checkboxes = document.querySelectorAll('#positionsGrid input[type="checkbox"]');
+            checkboxes.forEach(cb => {
+                cb.checked = false;
+                updatePositionBox(parseInt(cb.value));
+            });
+        }
+
+        let marqueurCounter = 0;
+        function addMarqueur(position = '', label = '') {
+            marqueurCounter++;
+            const container = document.getElementById('marqueursContainer');
+            const div = document.createElement('div');
+            div.className = 'marqueur-item';
+            div.id = `marqueur_${marqueurCounter}`;
+            div.innerHTML = `
+                <input type="number" placeholder="Position" value="${position}" class="marqueur-pos">
+                <input type="text" placeholder="Label (ex: Borne 1)" value="${label}" class="marqueur-label">
+                <button type="button" class="btn btn-danger" onclick="removeMarqueur(${marqueurCounter})">✖</button>
+            `;
+            container.appendChild(div);
+        }
+
+        function removeMarqueur(id) {
+            document.getElementById(`marqueur_${id}`).remove();
+        }
+
+        async function savePanneau(event) {
+            event.preventDefault();
+            
+            const nom = document.getElementById('panneauNom').value;
+            const type = document.getElementById('panneauType').value;
+            const nombrePorts = parseInt(document.getElementById('nombrePorts').value);
+            const startNumber = parseInt(document.getElementById('startNumber').value);
+            
+            // Récupérer les positions totales
+            const positions_totales = [];
+            for (let i = 0; i < nombrePorts; i++) {
+                positions_totales.push(startNumber + i);
+            }
+            
+            // Récupérer les positions utilisées
+            const positions_utilisees = [];
+            document.querySelectorAll('#positionsGrid input[type="checkbox"]:checked').forEach(cb => {
+                positions_utilisees.push(parseInt(cb.value));
+            });
+            
+            // Récupérer les marqueurs
+            const marqueurs_speciaux = {};
+            document.querySelectorAll('.marqueur-item').forEach(item => {
+                const pos = item.querySelector('.marqueur-pos').value;
+                const label = item.querySelector('.marqueur-label').value;
+                if (pos && label) {
+                    marqueurs_speciaux[pos] = label;
+                }
+            });
+            
+            const panneauData = {
+                nom,
+                type,
+                positions_totales,
+                positions_utilisees,
+                marqueurs_speciaux: marqueurs_speciaux || {}
+            };
+            
+            try {
+                const url = currentPanneauId 
+                    ? `/api/panneaux/${currentPanneauId}`
+                    : '/api/panneaux';
+                
+                const method = currentPanneauId ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(panneauData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showAlert(`Panneau ${currentPanneauId ? 'mis à jour' : 'créé'} avec succès !`, 'success');
+                    closeModal();
+                    loadPanneaux();
+                } else {
+                    showAlert(result.error || 'Erreur lors de la sauvegarde', 'error');
+                }
+            } catch (error) {
+                showAlert('Erreur lors de la sauvegarde', 'error');
+            }
+        }
+
+        async function deletePanneau(id) {
+            if (!confirm('Êtes-vous sûr de vouloir supprimer ce panneau ?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/panneaux/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showAlert('Panneau supprimé avec succès !', 'success');
+                    loadPanneaux();
+                } else {
+                    showAlert(result.error || 'Erreur lors de la suppression', 'error');
+                }
+            } catch (error) {
+                showAlert('Erreur lors de la suppression', 'error');
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('panneauModal').classList.remove('active');
+            document.getElementById('panneauForm').reset();
+            currentPanneauId = null;
+            marqueurCounter = 0;
+        }
+
+        function showAlert(message, type) {
+            const alert = document.getElementById('alert');
+            alert.className = `alert alert-${type} show`;
+            alert.textContent = message;
+            
+            setTimeout(() => {
+                alert.classList.remove('show');
+            }, 4000);
+        }
+    </script>
+</body>
+</html>
