@@ -2,7 +2,8 @@
 
 <div align="center">
 
-![PatchMap Logo](https://i.ibb.co/VPWNjy1/c3e11d5d-f87e-4303-8d40-b2092e492403.png)
+<img src="https://i.ibb.co/VPWNjy1/c3e11d5d-f87e-4303-8d40-b2092e492403.png" alt="PatchMap Logo" width="150"/>
+
 
 **Solution DCIM Open Source pour PME - Gestion intelligente de votre infrastructure réseau**
 
